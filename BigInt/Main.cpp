@@ -55,12 +55,18 @@ namespace math
 			u32[0] = val1;
 			u32[1] = val2;
 		}
+
+	public:
+		constexpr int_t operator~() const noexcept
+		{
+			return ~u64;
+		}
 	};
 
 	class BigInt
 	{
 	private:
-		static constexpr uint64_t s_nSize = (uint64_t)10;
+		static constexpr uint64_t s_nSize = (uint64_t)10; // move to template
 
 	private:
 		int_t m_pBuffer[s_nSize]{};
@@ -365,6 +371,17 @@ namespace math
 
 			return out;
 		}
+
+	public:
+		BigInt operator~() const noexcept
+		{
+			BigInt out;
+
+			for (uint64_t i = 0; i < s_nSize; i++)
+				out.setBlock(i, ~getBlock(i));
+
+			return out;
+		}
 	};
 }
 
@@ -373,7 +390,7 @@ int main()
 	math::BigInt i = "0xaabbccddeeff00112233445566778899";
 	math::BigInt j = "0x1234567890abcdef1234567890abcdef";
 
-	std::cout << i - j << std::endl;
+	std::cout << i << " - " << j << " = " << i - j << std::endl;
 	
 	return 0;
 }
