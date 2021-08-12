@@ -4,6 +4,8 @@
 #include <cstring>
 
 #include "Timer.h"
+#include "int_type.h"
+#include "exceptions.h"
 
 #ifdef _DEBUG
 	#define _BIGINT_EXCEPTIONS_
@@ -13,56 +15,12 @@
 #ifdef _BIGINT_EXCEPTIONS_
 #define BIGINT_NOEXCEPT noexcept(false)
 
-namespace math
-{
-	namespace error
-	{
-		struct overflow{};
-		struct underflow{};
-		struct bad_length{};
-		struct unrecognized_char{};
-		struct out_of_bounds{};
-	}
-}
-
 #else
 #define BIGINT_NOEXCEPT noexcept
-
 #endif
 
 namespace math
 {
-	struct int_t
-	{
-		union
-		{
-			uint64_t u64{};
-			uint32_t u32[2];
-			uint16_t u16[4];
-			uint8_t  u8[8];
-		};
-
-	public:
-		constexpr int_t() noexcept = default;
-
-		constexpr int_t(const uint64_t value) noexcept
-		{
-			u64 = value;
-		}
-
-		constexpr int_t(const uint32_t val1, const uint32_t val2) noexcept
-		{
-			u32[0] = val1;
-			u32[1] = val2;
-		}
-
-	public:
-		constexpr int_t operator~() const noexcept
-		{
-			return ~u64;
-		}
-	};
-
 	class BigInt
 	{
 	private:
@@ -101,11 +59,11 @@ namespace math
 				uint64_t i = 0;
 				for (char c = *ptrString; c != 0; c = *++ptrString, i++)
 				{
-					uint64_t nIterator = nStringLength - 1 - i;
-					uint8_t     quarterWord = getQuarterWord(c);
+					uint64_t nIterator    = nStringLength - 1 - i;
+					uint8_t  quarterWord  = getQuarterWord(c);
 					uint64_t nBlockOffset = (nIterator / 2) % sizeof(uint64_t);
-					bool        bOffset = (~nIterator) & 1;
-					uint64_t nBlock = nIterator / (2 * sizeof(uint64_t));
+					bool     bOffset      = (~nIterator) & 1;
+					uint64_t nBlock       = nIterator / (2 * sizeof(uint64_t));
 					setQuarterWord(quarterWord, nBlock, nBlockOffset, bOffset);
 				}
 			}
@@ -382,15 +340,36 @@ namespace math
 
 			return out;
 		}
+
+		BigInt operator<<(const size_t nBits) const noexcept
+		{
+			BigInt out;
+
+			const size_t nBlockOffset = nBits / 64;
+			const size_t nBitOffset   = nBits % 64;
+
+			int_t carry = 0;
+			for (uint64_t i = 0; i < s_nSize - nBlockOffset; i++)
+			{
+				int_t thisBlock = getBlock(i);
+				out.setBlock(i + nBlockOffset, thisBlock << nBitOffset | carry >> (64 - nBits));
+				carry = thisBlock;
+			}
+
+			return out;
+		}
 	};
 }
 
 int main()
 {
-	math::BigInt i = "0xaabbccddeeff00112233445566778899";
-	math::BigInt j = "0x1234567890abcdef1234567890abcdef";
+	math::BigInt i = "0x1234567890abcdef";
+	math::BigInt j = "0x1234567890abcdef";
 
 	std::cout << i << " - " << j << " = " << i - j << std::endl;
+
+	std::cout << i << " << 4 = " << (i << 4) << std::endl;
+	std::cout << i << " << 2 = " << (i << 2) << std::endl;
 	
 	return 0;
 }
