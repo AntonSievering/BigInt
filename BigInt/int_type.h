@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 
 namespace math
 {
@@ -27,6 +28,20 @@ namespace math
 			u32[0] = val1;
 			u32[1] = val2;
 		}
+
+		constexpr int_t(const std::array<uint16_t, 4> values) noexcept
+		{
+			for (size_t i = 0; i < values.size(); i++)
+				u16[i] = values[i];
+		}
+
+		constexpr int_t(const std::array<uint8_t, 8> values) noexcept
+		{
+			for (size_t i = 0; i < values.size(); i++)
+				u8[i] = values[i];
+		}
+
+	public:
 
 	public:
 		constexpr int_t operator~() const noexcept
