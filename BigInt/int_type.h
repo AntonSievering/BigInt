@@ -42,16 +42,134 @@ namespace math
 		}
 
 	public:
-
-	public:
-		constexpr int_t operator~() const noexcept
+		constexpr int_t operator+(const int_t rhs) const noexcept
 		{
-			return ~u64;
+			return u64 + rhs.u64;
 		}
 
+		constexpr int_t operator+=(const int_t rhs) noexcept
+		{
+			return u64 += rhs.u64;
+		}
+
+		constexpr int_t operator-(const int_t rhs) const noexcept
+		{
+			return u64 - rhs.u64;
+		}
+
+		constexpr int_t operator-=(const int_t rhs) noexcept
+		{
+			return u64 -= rhs.u64;
+		}
+
+		constexpr int_t operator*(const int_t rhs) const noexcept
+		{
+			return u64 * rhs.u64;
+		}
+
+		constexpr int_t operator*=(const int_t rhs) noexcept
+		{
+			return u64 *= rhs.u64;
+		}
+
+		constexpr int_t operator/(const int_t rhs) const noexcept
+		{
+			return u64 / rhs.u64;
+		}
+
+		constexpr int_t operator/=(const int_t rhs) noexcept
+		{
+			return u64 /= rhs.u64;
+		}
+
+		constexpr int_t operator%(const int_t rhs) const noexcept
+		{
+			return u64 % rhs.u64;
+		}
+
+		constexpr int_t operator%=(const int_t rhs) noexcept
+		{
+			return u64 %= rhs.u64;
+		}
+
+		constexpr int_t &operator++() noexcept
+		{
+			u64++;
+			return *this;
+		}
+
+		constexpr const int_t operator++(int) noexcept
+		{
+			return u64++;
+		}
+
+		constexpr int_t &operator--() noexcept
+		{
+			u64--;
+			return *this;
+		}
+
+		constexpr const int_t operator--(int) noexcept
+		{
+			return u64--;
+		}
+
+	public:
+		constexpr bool operator==(const int_t rhs) const noexcept
+		{
+			return u64 == rhs.u64;
+		}
+
+		constexpr bool operator!=(const int_t rhs) const noexcept
+		{
+			return u64 != rhs.u64;
+		}
+
+		constexpr bool operator>(const int_t rhs) const noexcept
+		{
+			return u64 > rhs.u64;
+		}
+
+		constexpr bool operator>=(const int_t rhs) const noexcept
+		{
+			return u64 >= rhs.u64;
+		}
+
+		constexpr bool operator<(const int_t rhs) const noexcept
+		{
+			return u64 < rhs.u64;
+		}
+
+		constexpr bool operator<=(const int_t rhs) const noexcept
+		{
+			return u64 <= rhs;
+		}
+
+	public:
+		constexpr bool operator!() const noexcept
+		{
+			return !u64;
+		}
+
+		constexpr bool operator&&(const int_t rhs) const noexcept
+		{
+			return u64 && rhs.u64;
+		}
+
+		constexpr bool operator||(const int_t rhs) const noexcept
+		{
+			return u64 || rhs.u64;
+		}
+
+	public:
 		constexpr int_t operator<<(const size_t nBits) const noexcept
 		{
 			return u64 << nBits;
+		}
+
+		constexpr int_t operator<<=(const size_t nBits) noexcept
+		{
+			return u64 <<= nBits;
 		}
 
 		constexpr int_t operator>>(const size_t nBits) const noexcept
@@ -59,9 +177,62 @@ namespace math
 			return u64 >> nBits;
 		}
 
+		constexpr int_t operator>>=(const size_t nBits) noexcept
+		{
+			return u64 <<= nBits;
+		}
+
+	public:
+		constexpr int_t operator+() const noexcept
+		{
+			return u64;
+		}
+
+		constexpr int_t operator-() const noexcept
+		{
+			return ~u64 + 1;
+		}
+
+	public:
+		constexpr int_t operator&(const int_t rhs) const noexcept
+		{
+			return u64 & rhs.u64;
+		}
+
+		constexpr int_t operator&=(const int_t rhs) noexcept
+		{
+			return u64 &= rhs.u64;
+		}
+
 		constexpr int_t operator|(const int_t rhs) const noexcept
 		{
 			return u64 | rhs.u64;
+		}
+
+		constexpr int_t operator|=(const int_t rhs) noexcept
+		{
+			return u64 |= rhs.u64;
+		}
+
+		constexpr int_t operator^(const int_t rhs) noexcept
+		{
+			return u64 ^ rhs.u64;
+		}
+
+		constexpr int_t operator^=(const int_t rhs) noexcept
+		{
+			return u64 ^= rhs.u64;
+		}
+
+		constexpr int_t operator~() const noexcept
+		{
+			return ~u64;
+		}
+
+	public:
+		constexpr operator uint64_t() const noexcept
+		{
+			return u64;
 		}
 	};
 }

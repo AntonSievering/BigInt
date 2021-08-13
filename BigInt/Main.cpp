@@ -363,6 +363,12 @@ namespace math
 
 int main()
 {
+	for (int i = 0; i < 10; (++i)++)
+		std::cout << i << std::endl;
+
+	for (math::int_t i = 0; i < 10; (++i)++)
+		std::cout << i << std::endl;
+
 	math::BigInt i = "0x1234567890abcdef";
 	math::BigInt j = "0x1234567890abcdef";
 
