@@ -125,26 +125,6 @@ namespace math
 			return u64 != rhs.u64;
 		}
 
-		constexpr bool operator>(const int_t rhs) const noexcept
-		{
-			return u64 > rhs.u64;
-		}
-
-		constexpr bool operator>=(const int_t rhs) const noexcept
-		{
-			return u64 >= rhs.u64;
-		}
-
-		constexpr bool operator<(const int_t rhs) const noexcept
-		{
-			return u64 < rhs.u64;
-		}
-
-		constexpr bool operator<=(const int_t rhs) const noexcept
-		{
-			return u64 <= rhs;
-		}
-
 	public:
 		constexpr bool operator!() const noexcept
 		{
@@ -174,7 +154,7 @@ namespace math
 
 		constexpr int_t operator>>(const size_t nBits) const noexcept
 		{
-			return u64 >> nBits;
+			return math::int_t(u64 >> nBits);
 		}
 
 		constexpr int_t operator>>=(const size_t nBits) noexcept

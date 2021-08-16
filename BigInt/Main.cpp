@@ -181,6 +181,12 @@ namespace math
 			internalAddOffset(value.u32[1], offset + 1);
 		}
 
+		void shift_left_set_last_bit(bool bit) noexcept
+		{
+			operator<<=(1);
+			setBlock(0, getBlock(0) | math::int_t(bit));
+		}
+
 	public:
 		[[nodiscard]] int_t getBlock(const uint64_t index) const noexcept
 		{
@@ -352,30 +358,110 @@ namespace math
 			for (uint64_t i = 0; i < s_nSize - nBlockOffset; i++)
 			{
 				int_t thisBlock = getBlock(i);
-				out.setBlock(i + nBlockOffset, thisBlock << nBitOffset | carry >> (64 - nBits));
+				out.setBlock(i + nBlockOffset, thisBlock << nBitOffset | carry);
+				carry = nBitOffset > 0 ? thisBlock >> (64 - nBitOffset) : math::int_t(0);
+			}
+
+			return out;
+		}
+
+		BigInt operator<<=(const size_t nBits) noexcept
+		{
+			*this = *this << nBits;
+			return *this;
+		}
+
+		BigInt operator>>(const size_t nBits) const noexcept
+		{
+			BigInt out;
+
+			const size_t nBlockOffset = nBits / 64;
+			const size_t nBitOffset = nBits % 64;
+
+			int_t carry = 0;
+			for (int64_t i = s_nSize - nBlockOffset - 1; i >= 0; i--)
+			{
+				int_t thisBlock = getBlock(i);
+				out.setBlock(i + nBlockOffset, thisBlock >> nBitOffset | carry << (64 - nBitOffset));
 				carry = thisBlock;
 			}
 
 			return out;
+		}
+
+		BigInt operator>>=(const size_t nBits) noexcept
+		{
+			*this = *this >> nBits;
+			return *this;
+		}
+
+	public:
+		bool operator<(const BigInt &rhs) const noexcept
+		{
+			for (int64_t i = (int64_t)s_nSize - 1; i >= 0; i--)
+				if (getBlock(i).u64 < rhs.getBlock(i)) return true;
+			return false;
+		}
+
+		bool operator<=(const BigInt &rhs) const noexcept
+		{
+			for (int64_t i = (int64_t)s_nSize - 1; i >= 0; i--)
+				if (getBlock(i).u64 < rhs.getBlock(i)) return true;
+			return getBlock(0) == rhs.getBlock(0);
+		}
+
+		bool operator>(const BigInt &rhs) const noexcept
+		{
+			for (int64_t i = (int64_t)s_nSize - 1; i >= 0; i--)
+				if (getBlock(i).u64 > rhs.getBlock(i)) return true;
+			return false;
+		}
+
+		bool operator>=(const BigInt &rhs) const noexcept
+		{
+			for (int64_t i = (int64_t)s_nSize - 1; i >= 0; i--)
+				if (getBlock(i).u64 > rhs.getBlock(i)) return true;
+			return getBlock(0) == rhs.getBlock(0);
+		}
+
+	public:
+		static void divmod(const BigInt &dividend, const BigInt &divisor, BigInt &quotinent, BigInt &remainder) noexcept
+		{
+			quotinent = BigInt(0);
+			remainder = BigInt(0);
+			size_t i = s_nSize;
+
+			while (i-- != 0)
+			{
+				uint32_t bit = 64;
+				while (bit-- != 0)
+				{
+					remainder.shift_left_set_last_bit(dividend.getBlock(i).u64 >> bit & 1);
+					
+					if (divisor <= remainder)
+					{
+						quotinent.shift_left_set_last_bit(1);
+						remainder -= divisor;
+					}
+					else
+					{
+						quotinent.shift_left_set_last_bit(0);
+					}
+				}
+			}
 		}
 	};
 }
 
 int main()
 {
-	for (int i = 0; i < 10; (++i)++)
-		std::cout << i << std::endl;
+	math::BigInt i = "0xad5f0d0cad5f0d0cad5f0d0cad5f0d0c";
+	math::BigInt j = "0x25fda4e";
 
-	for (math::int_t i = 0; i < 10; (++i)++)
-		std::cout << i << std::endl;
+	math::BigInt q, r;
+	math::BigInt::divmod(i, j, q, r);
 
-	math::BigInt i = "0x1234567890abcdef";
-	math::BigInt j = "0x1234567890abcdef";
+	std::cout << i << " / " << j << " = " << q << "; r = " << r << std::endl;
 
-	std::cout << i << " - " << j << " = " << i - j << std::endl;
-
-	std::cout << i << " << 4 = " << (i << 4) << std::endl;
-	std::cout << i << " << 2 = " << (i << 2) << std::endl;
-	
 	return 0;
 }
