@@ -350,7 +350,27 @@ namespace math
 	public: // -; -=; --
 		[[nodiscard]] BigInt operator-(const BigInt &rhs) const noexcept
 		{
-			return *this + (-rhs);
+			size_t nMaxSize = std::max(usedSize(), rhs.usedSize());
+
+			BigInt v = rhs;
+			v.m_data.resize(nMaxSize);
+			v.twosComplement();
+
+			BigInt out;
+			out.m_data.resize(nMaxSize);
+
+			uint32_t carry = 0;
+			for (uint64_t nBlock = 0; nBlock < nMaxSize; nBlock++)
+			{
+				for (uint64_t nOffset = 0; nOffset < 2; nOffset++)
+				{
+					int_t block = out.getBlock(nBlock);
+					block.u32[nOffset] = saveAdd(getBlock(nBlock).u32[nOffset], v.getBlock(nBlock).u32[nOffset], carry);
+					out.setBlock(nBlock, block);
+				}
+			}
+
+			return out;
 		}
 
 		BigInt &operator-=(const BigInt &rhs) noexcept
@@ -365,7 +385,9 @@ namespace math
 
 		[[nodiscard]] BigInt operator-(const int_t rhs) const noexcept
 		{
-			return *this + int_t{ ~rhs.u64 + (uint64_t)1 };
+			if (rhs.u64 != 0xffffffffffffffff)
+				return *this + int_t{ ~rhs.u64 + (uint64_t)1 };
+			return *this - BigInt(rhs);
 		}
 
 		BigInt &operator-=(const int_t rhs) noexcept
