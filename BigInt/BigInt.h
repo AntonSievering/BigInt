@@ -385,7 +385,7 @@ namespace math
 
 		[[nodiscard]] BigInt operator-(const int_t rhs) const noexcept
 		{
-			if (rhs.u64 != 0xffffffffffffffff)
+			if (rhs.u64 <= 0x8fffffffffffffff)
 				return *this + int_t{ ~rhs.u64 + (uint64_t)1 };
 			return *this - BigInt(rhs);
 		}
