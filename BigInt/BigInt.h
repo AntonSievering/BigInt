@@ -339,6 +339,11 @@ namespace math
 			return out;
 		}
 
+		BigInt operator*=(const BigInt &rhs) noexcept
+		{
+			return *this = *this * rhs;
+		}
+
 	public:
 		BigInt operator~() const noexcept
 		{
@@ -523,5 +528,8 @@ namespace math
 		{
 			return *this = *this ^ rhs;
 		}
+
+	public:
+		// todo: pow, powmod
 	};
 }
