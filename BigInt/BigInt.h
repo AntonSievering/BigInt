@@ -327,9 +327,9 @@ namespace math
 		{
 			BigInt out;
 
-			for (uint64_t i = 0; i < s_nSize * 2; i++)
+			for (uint64_t i = 0; i < s_nSize * 2; i++) // i := size of *this
 			{
-				for (uint64_t j = 0; j < s_nSize * 2; j++)
+				for (uint64_t j = 0; j < s_nSize * 2; j++) // j := size of rhs
 				{
 					uint64_t value = saveMul(getBlock(i / 2).u32[i % 2], rhs.getBlock(j / 2).u32[j % 2]);
 					out.addOffset(value, i + j);
@@ -530,6 +530,13 @@ namespace math
 		}
 
 	public:
-		// todo: pow, powmod
+		BigInt pow(const BigInt &rhs) const noexcept
+		{
+			BigInt out;
+
+
+
+			return out;
+		}
 	};
 }
