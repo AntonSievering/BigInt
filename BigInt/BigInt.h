@@ -256,8 +256,7 @@ namespace math
 
 				if (bWriteNeeded || val.u64 != 0 || idx == 0)
 				{
-					os << std::setw(8) << std::hex << std::setfill('0') << val.u32[1] << '\'' << std::setw(8) << std::hex << std::setfill('0') << val.u32[0];
-					//os << std::setw(16) << std::hex << std::setfill('0') << val.u64;
+					os << std::setw(8) << std::hex << std::setfill('0') << val.u32[1] << '\'' << std::setw(8) << std::setfill('0') << val.u32[0];
 					bWriteNeeded = true;
 				}
 			}
