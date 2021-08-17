@@ -19,16 +19,21 @@ public:
 
 	void setBlock(const size_t index, const math::int_t data) noexcept
 	{
-		if (index > m_vData.size())
+		if (index >= m_vData.size())
 		{
-			m_vData.reserve(index + 1);
+			resize(index + 1);
 			std::cout << "reallocation" << std::endl;
 		}
 		m_vData.at(index) = data;
 	}
 
-	void reserve(const size_t size) noexcept
+	void resize(const size_t size) noexcept
 	{
-		m_vData.reserve(size);
+		m_vData.resize(size);
+	}
+
+	size_t size() const noexcept
+	{
+		return m_vData.size();
 	}
 };
