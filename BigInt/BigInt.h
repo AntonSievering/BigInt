@@ -89,13 +89,13 @@ namespace math
 		{
 			const uint64_t nBlockIndex = byteIndex / sizeof(uint64_t);
 			const uint64_t nBlockOffset = byteIndex % sizeof(uint64_t);
-			
+
 			int_t block{};
-			
+
 			if (nBlockIndex < m_data.size())
 				block = getBlock(nBlockIndex);
 			block.u8[nBlockOffset] = byte;
-			
+
 			setBlock(nBlockIndex, block);
 		}
 
@@ -147,8 +147,6 @@ namespace math
 				data.u64 = ~data.u64;
 				setBlock(i, data);
 			}
-
-			// add 1 but don't carry correct
 
 			uint32_t carry = 0;
 			int_t block = getBlock(0);
@@ -207,7 +205,7 @@ namespace math
 			setBlock(nBlockIndex, block);
 		}
 
-		size_t getMinUsedSize(const BigInt &rhs) const noexcept
+		[[nodiscard]] size_t getMinUsedSize(const BigInt &rhs) const noexcept
 		{
 			size_t nOwnUsedSize = usedSize();
 			size_t nRhsUsedSize = rhs.usedSize();
@@ -224,7 +222,7 @@ namespace math
 			}
 		}
 
-		size_t usedSize() const noexcept
+		[[nodiscard]] size_t usedSize() const noexcept
 		{
 			size_t nUsedSize = m_data.size();
 
@@ -240,9 +238,15 @@ namespace math
 		}
 
 	public:
-		[[nodiscard]] int_t getBlock(const uint64_t index) const noexcept
+		[[nodiscard]] int_t getBlock(const uint64_t index) const BIGINT_NOEXCEPT
 		{
+#ifdef _BIGINT_EXCEPTIONS_
+			if (index < m_data.size())
+				return m_data.getBlock(index);
+			throw error::out_of_bounds{};
+#else
 			return m_data.getBlock(index);
+#endif
 		}
 
 		[[nodiscard]] int_t getBlockCheck(const uint64_t index) const noexcept
