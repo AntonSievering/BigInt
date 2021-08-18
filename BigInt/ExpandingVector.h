@@ -22,7 +22,7 @@ public:
 		if (index >= m_vData.size())
 		{
 			resize(index + 1);
-			std::cout << "reallocation" << std::endl;
+			//std::cout << "reallocation" << std::endl;
 		}
 		m_vData.at(index) = data;
 	}

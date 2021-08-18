@@ -187,15 +187,24 @@ namespace math
 		void shift_left_set_last_bit(bool bit) noexcept
 		{
 			int_t carry = 0;
-			for (uint64_t i = 0; i < m_data.size(); i++)
+			uint64_t i = 0;
+			do
 			{
 				int_t thisBlock = getBlock(i);
 				setBlock(i, thisBlock << 1Ui64 | carry);
 				carry = thisBlock >> 63Ui64;
-			}
+				i++;
+			} while (i < m_data.size() && carry.u64 != 0Ui64);
 
 			carryCorrect(carry.u32[0]);
 			setBlock(0, getBlock(0) | int_t(bit));
+		}
+
+		void setBit(const size_t nBlockIndex, const size_t nBitIndex) noexcept
+		{
+			int_t block = getBlockCheck(nBlockIndex);
+			block.u64 |= (uint64_t(1) << nBitIndex);
+			setBlock(nBlockIndex, block);
 		}
 
 		void carryCorrect(const uint32_t carry) noexcept
@@ -567,12 +576,8 @@ namespace math
 
 					if (divisor <= remainder)
 					{
-						quotinent.shift_left_set_last_bit(1);
+						quotinent.setBit(i, bit);
 						remainder -= divisor;
-					}
-					else
-					{
-						quotinent.shift_left_set_last_bit(0);
 					}
 				}
 			}
@@ -592,8 +597,21 @@ namespace math
 
 		BigInt operator%(const BigInt &rhs) const noexcept
 		{
-			BigInt quotient, remainder;
-			divmod(*this, rhs, quotient, remainder);
+			BigInt remainder = BigInt(0);
+
+			size_t i = m_data.size();
+			while (i-- != 0)
+			{
+				size_t bit = 64;
+				while (bit-- != 0)
+				{
+					remainder.shift_left_set_last_bit(getBlock(i).u64 >> bit & 1);
+
+					if (rhs <= remainder)
+						remainder -= rhs;
+				}
+			}
+
 			return remainder;
 		}
 
