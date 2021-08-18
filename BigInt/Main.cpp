@@ -8,11 +8,12 @@
 
 int main()
 {
-	math::BigInt i = "0xad5f0d0cad54de9c35648294aedff0d0cad5f0d0cad5f0d0c";
-	math::BigInt j = "0xffffffffffffffff";
-		
-	math::BigInt r, q;
-	math::BigInt::divmod(i, j, q, r);
+	math::BigInt e = "0x37856876767ad876f786e86878c8d9";
+	math::BigInt m = "0xdaef768d768a";
+	math::BigInt base = "0xfe678d";
+
+	math::BigInt r = base.powmod(e, m); // r = base ** e % m
+	std::cout << r << std::endl;
 
 	return 0;
 }

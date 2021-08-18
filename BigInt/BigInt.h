@@ -207,6 +207,13 @@ namespace math
 			setBlock(nBlockIndex, block);
 		}
 
+		size_t getMinUsedSize(const BigInt &rhs) const noexcept
+		{
+			size_t nOwnUsedSize = usedSize();
+			size_t nRhsUsedSize = rhs.usedSize();
+			return std::min(nOwnUsedSize, nRhsUsedSize);
+		}
+
 		void carryCorrect(const uint32_t carry) noexcept
 		{
 			if (carry)
@@ -560,6 +567,28 @@ namespace math
 			return getBlock(0) == rhs.getBlock(0);
 		}
 
+		bool operator==(const BigInt &rhs) const noexcept
+		{
+			size_t nOwnUsedSize = usedSize();
+			size_t nRhsUsedSize = rhs.usedSize();
+
+			if (nOwnUsedSize != nRhsUsedSize) return false;
+
+			uint64_t i = nOwnUsedSize;
+			while (i-- != 0)
+				if (getBlock(i) != rhs.getBlock(i)) return false;
+
+			return true;
+		}
+
+		bool operator==(const size_t rhs) const noexcept
+		{
+			size_t nOwnUsedSize = usedSize();
+			if (nOwnUsedSize > 1) return false;
+
+			return getBlock(0).u64 == rhs;
+		}
+
 	public:
 		static void divmod(const BigInt &dividend, const BigInt &divisor, BigInt &quotinent, BigInt &remainder) noexcept
 		{
@@ -623,9 +652,7 @@ namespace math
 	public:
 		BigInt operator&(const BigInt &rhs) const noexcept
 		{
-			size_t nOwnUsedSize = usedSize();
-			size_t nRhsUsedSize = rhs.usedSize();
-			size_t nMinUsedSize = std::min(nOwnUsedSize, nRhsUsedSize);
+			size_t nMinUsedSize = getMinUsedSize(rhs);
 
 			BigInt out;
 			out.m_data.resize(nMinUsedSize);
@@ -638,14 +665,17 @@ namespace math
 
 		BigInt operator&=(const BigInt &rhs) noexcept
 		{
-			return *this = *this & rhs;
+			size_t nMinUsedSize = getMinUsedSize(rhs);
+
+			for (size_t i = 0; i < nMinUsedSize; i++)
+				setBlock(i, getBlock(i) & rhs.getBlock(i));
+
+			return *this;
 		}
 		
 		BigInt operator|(const BigInt &rhs) const noexcept
 		{
-			size_t nOwnUsedSize = usedSize();
-			size_t nRhsUsedSize = rhs.usedSize();
-			size_t nMinUsedSize = std::min(nOwnUsedSize, nRhsUsedSize);
+			size_t nMinUsedSize = getMinUsedSize(rhs);
 
 			BigInt out;
 			out.m_data.resize(nMinUsedSize);
@@ -658,14 +688,17 @@ namespace math
 
 		BigInt operator|=(const BigInt &rhs) noexcept
 		{
-			return *this = *this | rhs;
+			size_t nMinUsedSize = getMinUsedSize(rhs);
+
+			for (size_t i = 0; i < nMinUsedSize; i++)
+				setBlock(i, getBlock(i) | rhs.getBlock(i));
+
+			return *this;
 		}
 
 		BigInt operator^(const BigInt &rhs) const noexcept
 		{
-			size_t nOwnUsedSize = usedSize();
-			size_t nRhsUsedSize = rhs.usedSize();
-			size_t nMinUsedSize = std::min(nOwnUsedSize, nRhsUsedSize);
+			size_t nMinUsedSize = getMinUsedSize(rhs);
 
 			BigInt out;
 			out.m_data.resize(nMinUsedSize);
@@ -678,15 +711,42 @@ namespace math
 
 		BigInt operator^=(const BigInt &rhs) noexcept
 		{
-			return *this = *this ^ rhs;
+			size_t nMinUsedSize = getMinUsedSize(rhs);
+
+			for (size_t i = 0; i < nMinUsedSize; i++)
+				setBlock(i, getBlock(i) ^ rhs.getBlock(i));
+
+			return *this;
 		}
 
 	public:
-		BigInt pow(const BigInt &rhs) const noexcept
+		BigInt powmod(const BigInt &exponent, const BigInt &modulus) const noexcept
 		{
-			BigInt out;
+			BigInt out = BigInt(1);
+			out.m_data.resize(2 * usedSize() + 1);
 
-			// todo
+			bool bBitSet = false;
+			size_t i = exponent.usedSize();
+			while (i-- != 0)
+			{
+				size_t bit = 1Ui64 << 63;
+				do
+				{
+					if (bBitSet)
+					{
+						BigInt n = out;
+						out *= n;
+						out %= modulus;
+					}
+					if (exponent.getBlock(i).u64 & bit)
+					{
+						out *= *this;
+						out %= modulus;
+						bBitSet = true;
+					}
+					bit >>= 1;
+				} while (bit != 0);
+			}
 
 			return out;
 		}
