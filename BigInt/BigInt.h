@@ -3,6 +3,7 @@
 #include "int_type.h"
 #include "exceptions.h"
 #include "ExpandingVector.h"
+#include <bitset>
 
 #ifdef _DEBUG
 #define _BIGINT_EXCEPTIONS_
@@ -26,52 +27,40 @@ namespace math
 	public:
 		BigInt() noexcept = default;
 
-		BigInt(const char *ptrString) BIGINT_NOEXCEPT
+		BigInt(std::string sNumber) BIGINT_NOEXCEPT
 		{
-			uint64_t nStringLength = std::strlen(ptrString);
-
 			auto toLowerCase = [](char c) -> char
 			{
 				return c | 0b00100000;
 			};
 
 			// hex
-			if (ptrString[0] == '0' && toLowerCase(ptrString[1]) == 'x')
+			if (sNumber[0] == '0' && toLowerCase(sNumber[1]) == 'x')
 			{
-				ptrString += 2;
-				nStringLength -= 2;
-				m_data.resize((nStringLength + 15) / 16);
+				sNumber = sNumber.substr(2);
+				uint64_t i = sNumber.size();
+				uint64_t count = 0;
 
-				uint64_t i = 0;
-				for (char c = *ptrString; c != 0; c = *++ptrString, i++)
+				while (i-- != 0)
 				{
-					uint64_t nIterator = nStringLength - 1 - i;
-					uint8_t  quarterWord = getQuarterWord(c);
-					uint64_t nBlockOffset = (nIterator / 2) % sizeof(uint64_t);
-					bool     bOffset = (~nIterator) & 1;
-					uint64_t nBlock = nIterator / (2 * sizeof(uint64_t));
-					setQuarterWord(quarterWord, nBlock, nBlockOffset, bOffset);
+					uint8_t  quarterWord = getQuarterWord(sNumber.at(i));
+					uint64_t nBlockOffset = (count % 16) / 2;
+					uint64_t nBlockIndex = count / 16;
+					bool bOffset = !(count & 1);
+
+					setQuarterWord(quarterWord, nBlockIndex, nBlockOffset, bOffset);
+
+					count++;
 				}
 			}
 			// binary
-			else if (ptrString[0] == '0' && toLowerCase(ptrString[1]) == 'b')
+			else if (sNumber[0] == '0' && toLowerCase(sNumber[1]) == 'b')
 			{
-				ptrString += 2;
-				nStringLength -= 2;
 			}
 			// decimal
 			else
 			{
 			}
-		}
-
-		template <class T>
-		explicit BigInt(const T &data) noexcept
-		{
-			const char *ptrData = (const char *)&data;
-
-			for (uint64_t i = 0; i < sizeof(T); i++)
-				setByte(ptrData[i], i);
 		}
 
 		BigInt(int_t rhs) noexcept
@@ -87,8 +76,8 @@ namespace math
 	private:
 		void setByte(uint8_t byte, uint64_t byteIndex) noexcept
 		{
-			const uint64_t nBlockIndex = byteIndex / sizeof(uint64_t);
-			const uint64_t nBlockOffset = byteIndex % sizeof(uint64_t);
+			const size_t nBlockIndex = byteIndex / sizeof(uint64_t);
+			const size_t nBlockOffset = byteIndex % sizeof(uint64_t);
 
 			int_t block{};
 
@@ -114,7 +103,7 @@ namespace math
 
 		void setQuarterWord(const uint8_t &nQuarterWord, const uint64_t &nBlockIndex, const uint64_t &nBlockOffset, const bool &bOffset) noexcept
 		{
-			int_t b = getBlock(nBlockIndex);
+			int_t b = getBlockCheck(nBlockIndex);
 			int_t output = b;
 
 			if (bOffset)
@@ -184,7 +173,7 @@ namespace math
 
 		void shift_left_set_last_bit(bool bit) noexcept
 		{
-			int_t carry = 0;
+			int_t carry = bit;
 			uint64_t i = 0;
 			do
 			{
@@ -192,10 +181,9 @@ namespace math
 				setBlock(i, thisBlock << 1Ui64 | carry);
 				carry = thisBlock >> 63Ui64;
 				i++;
-			} while (i < m_data.size() && carry.u64 != 0Ui64);
+			} while (i < m_data.size());
 
 			carryCorrect(carry.u32[0]);
-			setBlock(0, getBlock(0) | int_t(bit));
 		}
 
 		void setBit(const size_t nBlockIndex, const size_t nBitIndex) noexcept
@@ -256,9 +244,14 @@ namespace math
 			return int_t(0);
 		}
 
-		void setBlock(const size_t index, const int_t block) noexcept
+		inline void setBlock(const size_t index, const int_t block) noexcept
 		{
 			m_data.setBlock(index, block);
+		}
+
+		size_t getBlockCount() const noexcept
+		{
+			return m_data.size();
 		}
 
 	public:
@@ -271,12 +264,9 @@ namespace math
 			{
 				int_t val = i.getBlock(idx);
 
-				if (bWriteNeeded)
-					os << '\'';
-
 				if (bWriteNeeded || val.u64 != 0 || idx == 0)
 				{
-					os << std::setw(8) << std::hex << std::setfill('0') << val.u32[1] << '\'' << std::setw(8) << std::setfill('0') << val.u32[0];
+					os << std::setw(16) << std::hex << std::setfill('0') << val.u64;
 					bWriteNeeded = true;
 				}
 			}
@@ -290,7 +280,7 @@ namespace math
 			size_t nMaxSize = std::max(usedSize(), rhs.usedSize());
 
 			BigInt out;
-			out.m_data.resize(nMaxSize);
+			out.m_data.resize(std::max(nMaxSize, size_t(1)));
 			
 			uint32_t carry = 0;
 			for (uint64_t nBlock = 0; nBlock < nMaxSize; nBlock++)
@@ -318,10 +308,15 @@ namespace math
 			return *this += (int_t)1;
 		}
 
+		const BigInt operator++(int) noexcept
+		{
+			return *this += (int_t)1;
+		}
+
 		[[nodiscard]] BigInt operator+(const int_t rhs) const noexcept
 		{
 			BigInt out;
-			out.m_data.resize(usedSize());
+			out.m_data.resize(std::max(usedSize(), (size_t)1));
 			
 			uint32_t carry = 0;
 
@@ -373,7 +368,7 @@ namespace math
 			size_t nMaxSize = std::max(usedSize(), rhs.usedSize());
 
 			BigInt v = rhs;
-			v.m_data.resize(nMaxSize);
+			v.m_data.resize(std::max(nMaxSize, (size_t)1));
 			v.twosComplement();
 
 			BigInt out;
@@ -400,13 +395,16 @@ namespace math
 
 		BigInt &operator--() noexcept
 		{
-			return *this = *this - (int_t)1;
+			return *this -= (int_t)1;
+		}
+
+		const BigInt operator--(int) noexcept
+		{
+			return *this -= (int_t)1;
 		}
 
 		[[nodiscard]] BigInt operator-(const int_t rhs) const noexcept
 		{
-			if (rhs.u64 <= 0x8fffffffffffffff)
-				return *this + int_t{ ~rhs.u64 + (uint64_t)1 };
 			return *this - BigInt(rhs);
 		}
 
@@ -461,10 +459,31 @@ namespace math
 		BigInt operator<<(const size_t nBits) const noexcept
 		{
 			BigInt out;
-			out.m_data.resize(usedSize());
+			out.m_data.resize(std::max(usedSize(), (size_t)1));
 
 			const size_t nBlockOffset = nBits / 64;
 			const size_t nBitOffset = nBits % 64;
+
+			int_t carry = 0;
+			for (uint64_t i = 0; i < m_data.size(); i++)
+			{
+				int_t thisBlock = getBlock(i);
+				out.setBlock(i + nBlockOffset, thisBlock << nBitOffset | carry);
+				carry = nBitOffset > 0 ? thisBlock >> (64 - nBitOffset) : int_t(0);
+			}
+
+			out.carryCorrect(carry.u32[0]);
+
+			return out;
+		}
+
+		BigInt operator<<(const BigInt nBits) const noexcept
+		{
+			const size_t nBlockOffset = (nBits / 64).getBlock(0).u64;
+			const size_t nBitOffset   = nBits.getBlock(0).u64 % 64;
+
+			BigInt out;
+			out.m_data.resize(std::max(usedSize(), (size_t)1));
 
 			int_t carry = 0;
 			for (uint64_t i = 0; i < m_data.size(); i++)
@@ -488,13 +507,13 @@ namespace math
 		BigInt operator>>(const size_t nBits) const noexcept
 		{
 			BigInt out;
-			out.m_data.resize(usedSize());
+			out.m_data.resize(std::max(usedSize(), (size_t)1));
 
-			const size_t nBlockOffset = nBits / 64;
-			const size_t nBitOffset = nBits % 64;
+			const int64_t nBlockOffset = nBits / 64;
+			const uint64_t nBitOffset = nBits % 64;
 
 			int_t carry = 0;
-			for (int64_t i = std::max(m_data.size() - 1, nBlockOffset); i >= nBlockOffset; i--)
+			for (int64_t i = std::max((int64_t)m_data.size() - 1, nBlockOffset); i >= nBlockOffset; i--)
 			{
 				int_t thisBlock = getBlock(i);
 				out.setBlock(i - nBlockOffset, thisBlock >> nBitOffset | carry);
@@ -521,9 +540,9 @@ namespace math
 
 			uint64_t i = nOwnUsedSize;
 			while (i-- != 0)
-				if (getBlock(i).u64 < rhs.getBlock(i)) return true;
+				if (getBlock(i) >= rhs.getBlock(i)) return false;
 			
-			return false;
+			return true;
 		}
 
 		bool operator<=(const BigInt &rhs) const noexcept
@@ -536,7 +555,7 @@ namespace math
 
 			uint64_t i = nOwnUsedSize;
 			while (i-- != 0)
-				if (getBlock(i).u64 < rhs.getBlock(i)) return true;
+				if (getBlock(i) > rhs.getBlock(i)) return false;
 
 			return getBlock(0) == rhs.getBlock(0);
 		}
@@ -551,9 +570,9 @@ namespace math
 
 			uint64_t i = nOwnUsedSize;
 			while (i-- != 0)
-				if (getBlock(i).u64 > rhs.getBlock(i)) return true;
+				if (getBlock(i) <= rhs.getBlock(i)) return false;
 
-			return false;
+			return true;
 		}
 
 		bool operator>=(const BigInt &rhs) const noexcept
@@ -566,11 +585,14 @@ namespace math
 
 			uint64_t i = nOwnUsedSize;
 			while (i-- != 0)
-				if (getBlock(i).u64 > rhs.getBlock(i)) return true;
+			{
+				if (getBlock(i) < rhs.getBlock(i)) return false;
+				if (getBlock(i) > rhs.getBlock(i)) return true;
+			}
 
 			return getBlock(0) == rhs.getBlock(0);
 		}
-
+		
 		bool operator==(const BigInt &rhs) const noexcept
 		{
 			size_t nOwnUsedSize = usedSize();
@@ -640,7 +662,7 @@ namespace math
 				{
 					remainder.shift_left_set_last_bit(getBlock(i).u64 >> bit & 1);
 
-					if (rhs <= remainder)
+					if (remainder >= rhs)
 						remainder -= rhs;
 				}
 			}
@@ -659,7 +681,7 @@ namespace math
 			size_t nMinUsedSize = getMinUsedSize(rhs);
 
 			BigInt out;
-			out.m_data.resize(nMinUsedSize);
+			out.m_data.resize(std::max(nMinUsedSize, (size_t)1));
 
 			for (size_t i = 0; i < nMinUsedSize; i++)
 				out.setBlock(i, getBlock(i) & rhs.getBlock(i));
@@ -682,7 +704,7 @@ namespace math
 			size_t nMinUsedSize = getMinUsedSize(rhs);
 
 			BigInt out;
-			out.m_data.resize(nMinUsedSize);
+			out.m_data.resize(std::max(nMinUsedSize, (size_t)1));
 
 			for (size_t i = 0; i < nMinUsedSize; i++)
 				out.setBlock(i, getBlock(i) | rhs.getBlock(i));
@@ -705,7 +727,7 @@ namespace math
 			size_t nMinUsedSize = getMinUsedSize(rhs);
 
 			BigInt out;
-			out.m_data.resize(nMinUsedSize);
+			out.m_data.resize(std::max(nMinUsedSize, (size_t)1));
 
 			for (size_t i = 0; i < nMinUsedSize; i++)
 				out.setBlock(i, getBlock(i) ^ rhs.getBlock(i));
@@ -754,5 +776,39 @@ namespace math
 
 			return out;
 		}
+
+		/*BigInt pow(const BigInt &exponent) const noexcept
+		{
+			BigInt out = BigInt(1);
+			out.m_data.resize(2 * usedSize() + 1);
+
+			bool bBitSet = false;
+			size_t i = exponent.usedSize();
+			while (i-- != 0)
+			{
+				size_t bit = 1Ui64 << 63;
+				do
+				{
+					if (bBitSet)
+					{
+						BigInt n = out;
+						out *= n;
+					}
+					if (exponent.getBlock(i).u64 & bit)
+					{
+						out *= *this;
+						bBitSet = true;
+					}
+					bit >>= 1;
+				} while (bit != 0);
+			}
+
+			return out;
+		}*/
 	};
+
+	bool operator>=(const int_t lhs, const BigInt &rhs) noexcept
+	{
+		return BigInt(lhs) >= rhs;
+	}
 }
