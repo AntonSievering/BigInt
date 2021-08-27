@@ -37,5 +37,8 @@
     <ClInclude Include="Prime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="euclidean.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

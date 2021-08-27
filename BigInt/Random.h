@@ -30,11 +30,10 @@ public:
 	uint32_t get32() noexcept
 	{
 		m_nSeed += 0xe120fc15;
-		uint64_t temp;
-		temp = (uint64_t)m_nSeed * 0x4a39b70d;
-		uint32_t m1 = (temp >> 32) ^ temp;
+		uint64_t temp = (uint64_t)m_nSeed * 0x4a39b70d;
+		uint32_t m1 = static_cast<uint32_t>((temp >> 32) ^ temp);
 		temp = (uint64_t)m1 * 0x12fad5c9;
-		uint32_t m2 = (temp >> 32) ^ temp;
+		uint32_t m2 = static_cast<uint32_t>((temp >> 32) ^ temp);
 		return m2;
 	}
 

@@ -56,7 +56,7 @@ static bool millerTest(math::BigInt d, const math::BigInt &n, Random &randomDevi
 	return false;
 }
 
-static bool primeTest(const math::BigInt &number, Random &randomDevice, const size_t nIterations = 20) noexcept
+static bool primeTest_MillerRabin(const math::BigInt &number, Random &randomDevice, const size_t nIterations = 20) noexcept
 {
 	if (!isLowLevelPrime(number)) return false;
 
@@ -67,5 +67,31 @@ static bool primeTest(const math::BigInt &number, Random &randomDevice, const si
 		if (!millerTest(d, number, randomDevice))
 			return false;
 
+	return true;
+}
+
+static bool isPrime_Fermat(const math::BigInt &p, Random &random)
+{
+	if (!isLowLevelPrime(p)) return false;
+
+	math::BigInt pminus1 = p - (math::int_t)1;
+	size_t nBitCount = Random::getBitCount(p);
+
+	for (size_t i = 0; i < 100; i++)
+	{
+		std::cout << i << " ";
+
+		math::BigInt x;
+		do
+			x = random.get(2 * nBitCount) % p;
+		while (x == 0);
+		
+		if (x.powmod(pminus1, p) != 1)
+		{
+			std::cout << std::endl;
+			return false;
+		}
+	}
+	std::cout << std::endl;
 	return true;
 }

@@ -125,7 +125,7 @@ namespace math
 			uint64_t result = (uint64_t)a + (uint64_t)b + (uint64_t)carry;
 			carry = result >> 32;
 
-			return result;
+			return static_cast<uint32_t>(result);
 		};
 
 		void twosComplement() noexcept
@@ -137,12 +137,9 @@ namespace math
 				setBlock(i, data);
 			}
 
-			uint32_t carry = 0;
-			int_t block = getBlock(0);
-			block.u32[0] = saveAdd(getBlock(0).u32[0], 1, carry);
-			setBlock(0, block);
+			uint32_t carry = 1;
 
-			for (uint64_t nBlock = 1; nBlock < m_data.size(); nBlock++)
+			for (uint64_t nBlock = 0; nBlock < m_data.size(); nBlock++)
 			{
 				for (uint64_t nOffset = 0; nOffset < 2; nOffset++)
 				{
@@ -555,7 +552,10 @@ namespace math
 
 			uint64_t i = nOwnUsedSize;
 			while (i-- != 0)
+			{
 				if (getBlock(i) > rhs.getBlock(i)) return false;
+				if (getBlock(i) < rhs.getBlock(i)) return true;
+			}
 
 			return getBlock(0) == rhs.getBlock(0);
 		}

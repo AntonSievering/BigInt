@@ -147,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BigInt.h" />
+    <ClInclude Include="euclidean.h" />
     <ClInclude Include="exceptions.h" />
     <ClInclude Include="ExpandingVector.h" />
     <ClInclude Include="int_type.h" />
